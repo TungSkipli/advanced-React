@@ -11,6 +11,10 @@ yarn.lock
 .env.test.local
 .env.production.local
 
+*-firebase-adminsdk-*.json
+serviceAccount.json
+firebase-credentials.json
+
 disk/
 uploads/
 storage/
