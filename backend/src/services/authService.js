@@ -57,11 +57,18 @@ class AuthService {
         }
     }
 
-    async _updateLastLogin(uid) {
+    async _updateLastLogin(uid, userRecord) {
         try {
-            await db.collection('users').doc(uid).update({
-                lastLoginAt: admin.firestore.FieldValue.serverTimestamp()
-            });
+            const docRef = db.collection('users').doc(uid);
+            const docSnapshot = await docRef.get();
+            
+            if (!docSnapshot.exists) {
+                await this._createUserDocument(userRecord);
+            } else {
+                await docRef.update({
+                    lastLoginAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
         } catch (error) {
             console.error('Error updating last login:', error);
         }
@@ -77,7 +84,7 @@ class AuthService {
 
             const userRecord = await auth.getUser(decodedToken.uid);
 
-            await this._updateLastLogin(userRecord.uid);
+            await this._updateLastLogin(userRecord.uid, userRecord);
 
             const userDoc = await this._getUserDocument(userRecord.uid);
 
