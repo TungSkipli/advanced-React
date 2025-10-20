@@ -1,72 +1,76 @@
-const {auth, db} = require('../config/firebase')
-
+const { auth, db, admin } = require('../config/firebase');
 
 class AuthService {
 
-    // Register
-    async _createUserDocument(userRecord){
+    async _createUserDocument(userRecord) {
         try {
-            const { uid, email, displayName, emailVerified } = userRecord;
-
-            await db.collection('users').doc(uid).set({
+            await db.collection('users').doc(userRecord.uid).set({
                 uid: userRecord.uid,
                 email: userRecord.email,
                 displayName: userRecord.displayName,
-                createdAt: Date.now(),
-                lastLoginAt: Date.now(),
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                lastLoginAt: admin.firestore.FieldValue.serverTimestamp(),
                 role: 'user'
-            })
+            });
         } catch (error) {
-            throw error;
+            console.error('Error creating user document:', error);
+            throw new Error('Failed to create user document');
         }
     }
 
-    async Register(userData) {
+    async register(userData) {
         try {
-            const {email, password, displayName} = userData;
+            const { email, password, displayName } = userData;
 
-            if(!email || !password){
-                throw new Error('Please provide email and password')
+            if (!email || !password) {
+                throw new Error('Email and password are required');
             }
 
-            const userRecord  = await auth.createUser({
+            if (password.length < 6) {
+                throw new Error('Password must be at least 6 characters');
+            }
+
+            const userRecord = await auth.createUser({
                 email,
                 password,
                 displayName: displayName || email.split('@')[0],
                 emailVerified: false
-            })
+            });
 
-            const token = await auth.createCustomToken(userRecord .uid);
+            const token = await auth.createCustomToken(userRecord.uid);
 
-            await this._createUserDocument(userRecord );
+            await this._createUserDocument(userRecord);
 
             return {
-                uid: userRecord .uid,
-                email: userRecord .email,
-                displayName: userRecord .displayName,
+                uid: userRecord.uid,
+                email: userRecord.email,
+                displayName: userRecord.displayName,
                 token
-            }
+            };
 
         } catch (error) {
+            console.error('Registration error:', error);
+            if (error.code === 'auth/email-already-exists') {
+                throw new Error('Email already exists');
+            }
             throw error;
         }
     }
 
-    // Login
-     async _updateLastLogin(uid){
+    async _updateLastLogin(uid) {
         try {
             await db.collection('users').doc(uid).update({
-                lastLoginAt: Date.now()
-            })
+                lastLoginAt: admin.firestore.FieldValue.serverTimestamp()
+            });
         } catch (error) {
-            throw error;
+            console.error('Error updating last login:', error);
         }
-     }
+    }
 
-    async login(Token){
+    async login(token) {
         try {
-            if(!Token){
-                throw new Error("Please Provide Token")
+            if (!token) {
+                throw new Error('Token is required');
             }
 
             const decodedToken = await auth.verifyIdToken(token);
@@ -75,88 +79,111 @@ class AuthService {
 
             await this._updateLastLogin(userRecord.uid);
 
+            const userDoc = await this._getUserDocument(userRecord.uid);
+
             return {
                 uid: userRecord.uid,
                 email: userRecord.email,
                 displayName: userRecord.displayName,
                 emailVerified: userRecord.emailVerified,
-            }
+                ...userDoc
+            };
+
         } catch (error) {
-            throw error;
+            console.error('Login error:', error);
+            if (error.code === 'auth/id-token-expired') {
+                throw new Error('Token expired');
+            }
+            throw new Error('Invalid token');
         }
     }
 
-    // get profile user by id
-    async _getUserDocument(uid){
+    async _getUserDocument(uid) {
         try {
-            const docRef = db.collection('users').doc(uid);
+            const docSnapshot = await db.collection('users').doc(uid).get();
 
-            if(!docRef.exists){
-                throw new Error(`No User Found with ID ${uid}`);
+            if (!docSnapshot.exists) {
+                return null;
             }
 
-            return docRef.data();
+            return docSnapshot.data();
         } catch (error) {
+            console.error('Error getting user document:', error);
             return null;
         }
     }
 
-    async getProfile(uid){
+    async getUserProfile(uid) {
         try {
-            if(!uid){
-            throw new Error('Please Provide UID');
-        }
+            if (!uid) {
+                throw new Error('User ID is required');
+            }
 
-            const userRecord = await auth.getUser(uid)
+            const userRecord = await auth.getUser(uid);
 
-            const userDoc =  await this._getUserDocument(uid);
+            const userDoc = await this._getUserDocument(uid);
 
-        return{
-            uid: userRecord.uid,
-            email: userRecord.email,
-            displayName: userRecord.displayName,
-            emailVerified: userRecord.emailVerified,
-            ...userDoc
-        }
-       } catch (error) {
+            return {
+                uid: userRecord.uid,
+                email: userRecord.email,
+                displayName: userRecord.displayName,
+                emailVerified: userRecord.emailVerified,
+                ...userDoc
+            };
+
+        } catch (error) {
+            console.error('Get profile error:', error);
+            if (error.code === 'auth/user-not-found') {
+                throw new Error('User not found');
+            }
             throw error;
-       }
+        }
     }
 
-    // update profile
-    async _updateUserDocument(uid, data){
+    async _updateUserDocument(uid, data) {
         try {
             await db.collection('users').doc(uid).update({
-            ...data,
-            updatedAt: Date.now()
-        })
+                ...data,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
         } catch (error) {
-            throw error;
+            console.error('Error updating user document:', error);
+            throw new Error('Failed to update user document');
         }
     }
 
-    async UpdateProfile(uid, updateData){
+    async updateUserProfile(uid, updateData) {
         try {
-            if(!uid){
-            throw new Error('Please Provide UID');
-        }
-        const{displayName, ...otherData} = updateData;
+            if (!uid) {
+                throw new Error('User ID is required');
+            }
 
-        const authUpdateData = {};
-        if(displayName){
-            authUpdateData.displayName = displayName;
-        }
+            if (!updateData || Object.keys(updateData).length === 0) {
+                throw new Error('Update data is required');
+            }
 
-        if (Object.keys(otherData).length > 0) {
-            await this._updateUserDocument(uid, otherData);
-        }
+            const { displayName, photoURL, phoneNumber, ...otherData } = updateData;
 
-        return await this.getProfile(uid);
+            const authUpdateData = {};
+            if (displayName !== undefined) authUpdateData.displayName = displayName;
+            if (photoURL !== undefined) authUpdateData.photoURL = photoURL;
+            if (phoneNumber !== undefined) authUpdateData.phoneNumber = phoneNumber;
+
+            if (Object.keys(authUpdateData).length > 0) {
+                await auth.updateUser(uid, authUpdateData);
+            }
+
+            if (Object.keys(otherData).length > 0) {
+                await this._updateUserDocument(uid, otherData);
+            }
+
+            return await this.getUserProfile(uid);
 
         } catch (error) {
+            console.error('Update profile error:', error);
             throw error;
         }
     }
- }
+}
 
- module.exports = new AuthService();
+module.exports = new AuthService();
