@@ -1,6 +1,6 @@
 import { useState } from "react";
-import CommentBox from "../component/commentBox";
-import CommentList from "../component/CommentList";
+import CommentBox from "../component/comment/commentBox";
+import CommentList from "../component/comment/CommentList";
 
 
 
