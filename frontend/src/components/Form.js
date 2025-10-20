@@ -90,7 +90,6 @@ const FormError = ({ children }) => {
   );
 };
 
-// Export components
 Form.Group = FormGroup;
 Form.Label = FormLabel;
 Form.Input = FormInput;

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
+const commentRoutes = require("./routes/commentRoutes");
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/comments', commentRoutes);
 
 app.use((req, res) => {
     res.status(404).json({

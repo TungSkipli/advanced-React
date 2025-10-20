@@ -30,7 +30,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (!formData.email || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all required fields');
       return;
@@ -56,7 +55,6 @@ const Register = () => {
         formData.displayName || formData.email.split('@')[0]
       );
       
-      // Redirect to home or dashboard
       navigate('/');
       
     } catch (err) {

@@ -28,7 +28,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
       return;
@@ -40,7 +39,6 @@ const Login = () => {
       
       await signIn(formData.email, formData.password);
       
-      // Redirect to home or dashboard
       navigate('/');
       
     } catch (err) {

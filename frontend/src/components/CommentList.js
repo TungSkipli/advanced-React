@@ -1,4 +1,15 @@
-export default function CommentList({comments}) {
+import CommentItem from './CommentItem';
+
+export default function CommentList({ comments, onUpdate, onDelete, onReply, isLoading }) {
+    if (isLoading) {
+        return (
+            <div className="comment-list">
+                <h3>Comments</h3>
+                <div className="loading-comments">Loading comments...</div>
+            </div>
+        );
+    }
+
     if (comments.length === 0) {
         return (
             <div className="comment-list">
@@ -14,10 +25,14 @@ export default function CommentList({comments}) {
         <div className="comment-list">
             <h3>Comments ({comments.length})</h3>
             {comments.map((comment) => (
-                <div key={comment.id} className="comment-item">
-                    <div className="comment-body">{comment.body}</div>
-                </div>
+                <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    onUpdate={onUpdate}
+                    onDelete={onDelete}
+                    onReply={onReply}
+                />
             ))}
         </div>
-    )
+    );
 }
