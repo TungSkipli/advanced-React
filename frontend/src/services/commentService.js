@@ -1,4 +1,4 @@
-import { API_URL } from '../config/api';
+const API_URL = process.env.REACT_APP_API_URL;
 
 const getAuthToken = () => {
     const token = localStorage.getItem('token');

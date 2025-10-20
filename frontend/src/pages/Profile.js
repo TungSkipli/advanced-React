@@ -35,20 +35,12 @@ const Profile = () => {
             <span className="value">{user.email}</span>
           </div>
           
-          <div className="info-row">
-            <span className="label">User ID:</span>
-            <span className="value">{user.uid}</span>
-          </div>
-          
+
           <div className="info-row">
             <span className="label">Role:</span>
             <span className="value">{user.role || 'user'}</span>
           </div>
           
-          <div className="info-row">
-            <span className="label">Email Verified:</span>
-            <span className="value">{user.emailVerified ? 'Yes' : 'No'}</span>
-          </div>
         </div>
 
         <button className="logout-button" onClick={handleLogout}>
