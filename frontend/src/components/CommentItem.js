@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import CommentBox from './CommentBox';
-import Button from './Button';
 
 export default function CommentItem({ comment, onUpdate, onDelete, onReply }) {
     const { user } = useAuth();
