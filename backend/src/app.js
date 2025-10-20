@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require("cors");
 const {db} = require('./config/firebase');
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -14,26 +15,13 @@ app.get('/', (req, res) => {
     return res.send('Hello World!');
 })
 
-app.get('/test-firebase', async(req, res) => {
-    try {
-        const collections = await db.listCollections();
-        const collectionNames = collections.map(col => col.id);
-        
-        return res.json({ 
-            success: true, 
-            message: 'connect firebase successfully!',
-            data: {
-                collections: collectionNames.length > 0 ? collectionNames : 'did not have any collections',
-                totalCollections: collectionNames.length
-            }
-        });
-    } catch (error) {
-        return res.status(500).json({ 
-            success: false, 
-            message: 'error connect to firebase', 
-            error: error.message 
-        });
-    }
-})
+app.use('/api/auth', authRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Cannot find ${req.originalUrl} on this server`
+  });
+});
 
 module.exports = app;
