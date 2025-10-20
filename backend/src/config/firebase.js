@@ -1,18 +1,33 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../../project-learning-9fdad-firebase-adminsdk-fbsvc-04b5710c11.json');
+const path = require('path');
+const fs = require('fs');
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-});
+// Load service account key
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json';
+const fullPath = path.resolve(__dirname, '../../', serviceAccountPath);
 
-const db = admin.firestore();
-const auth = admin.auth();
-const storage = admin.storage();
-
-module.exports = {
-    admin,
-    db,
-    auth,
-    storage
+if (!fs.existsSync(fullPath)) {
+  throw new Error(`Service account key not found at: ${fullPath}`);
 }
+
+const serviceAccount = require(fullPath);
+
+// Initialize Firebase Admin SDK
+if (admin.apps.length === 0) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+  console.log('✅ Firebase Admin SDK initialized');
+  console.log('📁 Project:', serviceAccount.project_id);
+}
+
+// Get the default app
+const app = admin.app();
+
+// Export instances
+module.exports = {
+  admin,
+  app,
+  auth: admin.auth(app),
+  db: admin.firestore(app),
+};
