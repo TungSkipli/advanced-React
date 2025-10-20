@@ -9,11 +9,9 @@ const {
     updateUserProfile 
 } = require('../controllers/authController');
 
-// Public routes
 router.post('/register', register);
 router.post('/login', login);
 
-// Protected routes
 router.use(authenticateUser);
 router.get('/me', getUserProfile);
 router.put('/me', updateUserProfile);

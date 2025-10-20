@@ -2,7 +2,6 @@ const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 
-// Load service account key
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json';
 const fullPath = path.resolve(__dirname, '../../', serviceAccountPath);
 
@@ -12,19 +11,14 @@ if (!fs.existsSync(fullPath)) {
 
 const serviceAccount = require(fullPath);
 
-// Initialize Firebase Admin SDK
 if (admin.apps.length === 0) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
-  console.log('✅ Firebase Admin SDK initialized');
-  console.log('📁 Project:', serviceAccount.project_id);
 }
 
-// Get the default app
 const app = admin.app();
 
-// Export instances
 module.exports = {
   admin,
   app,

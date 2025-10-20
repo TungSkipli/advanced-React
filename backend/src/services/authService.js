@@ -2,7 +2,6 @@ const { auth, db, admin } = require('../config/firebase');
 
 class AuthService {
 
-    // ==================== REGISTER ====================
     async _createUserDocument(userRecord) {
         try {
             await db.collection('users').doc(userRecord.uid).set({
@@ -31,7 +30,6 @@ class AuthService {
                 throw new Error('Password must be at least 6 characters');
             }
 
-            // Create user in Firebase Auth
             const userRecord = await auth.createUser({
                 email,
                 password,
@@ -39,10 +37,8 @@ class AuthService {
                 emailVerified: false
             });
 
-            // Create custom token
             const token = await auth.createCustomToken(userRecord.uid);
 
-            // Create user document in Firestore
             await this._createUserDocument(userRecord);
 
             return {
@@ -61,7 +57,6 @@ class AuthService {
         }
     }
 
-    // ==================== LOGIN ====================
     async _updateLastLogin(uid) {
         try {
             await db.collection('users').doc(uid).update({
@@ -78,16 +73,12 @@ class AuthService {
                 throw new Error('Token is required');
             }
 
-            // Verify Firebase ID token
             const decodedToken = await auth.verifyIdToken(token);
 
-            // Get user record
             const userRecord = await auth.getUser(decodedToken.uid);
 
-            // Update last login
             await this._updateLastLogin(userRecord.uid);
 
-            // Get user document from Firestore
             const userDoc = await this._getUserDocument(userRecord.uid);
 
             return {
@@ -107,7 +98,6 @@ class AuthService {
         }
     }
 
-    // ==================== GET USER PROFILE ====================
     async _getUserDocument(uid) {
         try {
             const docSnapshot = await db.collection('users').doc(uid).get();
@@ -129,10 +119,8 @@ class AuthService {
                 throw new Error('User ID is required');
             }
 
-            // Get user from Firebase Auth
             const userRecord = await auth.getUser(uid);
 
-            // Get user document from Firestore
             const userDoc = await this._getUserDocument(uid);
 
             return {
@@ -152,7 +140,6 @@ class AuthService {
         }
     }
 
-    // ==================== UPDATE USER PROFILE ====================
     async _updateUserDocument(uid, data) {
         try {
             await db.collection('users').doc(uid).update({
@@ -177,7 +164,6 @@ class AuthService {
 
             const { displayName, photoURL, phoneNumber, ...otherData } = updateData;
 
-            // Update Firebase Auth fields
             const authUpdateData = {};
             if (displayName !== undefined) authUpdateData.displayName = displayName;
             if (photoURL !== undefined) authUpdateData.photoURL = photoURL;
@@ -187,12 +173,10 @@ class AuthService {
                 await auth.updateUser(uid, authUpdateData);
             }
 
-            // Update Firestore document
             if (Object.keys(otherData).length > 0) {
                 await this._updateUserDocument(uid, otherData);
             }
 
-            // Return updated profile
             return await this.getUserProfile(uid);
 
         } catch (error) {

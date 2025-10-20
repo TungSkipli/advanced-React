@@ -1,6 +1,5 @@
 const authService = require('../services/authService');
 
-// ==================== REGISTER ====================
 const register = async (req, res) => {
     try {
         const userData = await authService.register(req.body);
@@ -21,7 +20,6 @@ const register = async (req, res) => {
     }
 };
 
-// ==================== LOGIN ====================
 const login = async (req, res) => {
     try {
         const { token } = req.body;
@@ -51,10 +49,8 @@ const login = async (req, res) => {
     }
 };
 
-// ==================== GET USER PROFILE ====================
 const getUserProfile = async (req, res) => {
     try {
-        // Get uid from authenticated user (set by middleware)
         const uid = req.user.uid;
 
         const userProfileData = await authService.getUserProfile(uid);
@@ -74,10 +70,8 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-// ==================== UPDATE USER PROFILE ====================
 const updateUserProfile = async (req, res) => {
     try {
-        // Get uid from authenticated user (set by middleware)
         const uid = req.user.uid;
 
         const updatedUserData = await authService.updateUserProfile(uid, req.body);
