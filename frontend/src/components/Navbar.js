@@ -31,6 +31,9 @@ const Navbar = () => {
               <Link to="/comments" className="navbar-link">
                 Comments
               </Link>
+              <Link to="/courses" className="navbar-link">
+                Courses
+              </Link>
               <span className="navbar-user">
                 {user?.displayName || user?.email}
               </span>

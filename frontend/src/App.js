@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import Comment from './pages/Comment';
+import Course from './pages/Course';
 import './styles/App.css';
 
 function App() {
@@ -33,6 +34,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Comment />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/courses" 
+            element={
+              <ProtectedRoute>
+                <Course />
               </ProtectedRoute>
             } 
           />

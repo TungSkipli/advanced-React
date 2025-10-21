@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import CommentBox from './CommentBox';
 
-export default function CommentItem({ comment, onUpdate, onDelete, onReply }) {
+export default function CommentItem({ comment, parentComment, onUpdate, onDelete, onReply, isReply = false, isParent = false }) {
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
@@ -38,65 +38,94 @@ export default function CommentItem({ comment, onUpdate, onDelete, onReply }) {
         }
     };
 
+    // Generate consistent color from userName
+    const getAvatarColor = (userName) => {
+        if (!userName) return '#667eea';
+        const colors = [
+            '#667eea', '#764ba2', '#f093fb', '#4facfe',
+            '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+            '#a8edea', '#ff6a00', '#ee0979', '#667eea'
+        ];
+        const index = userName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+        return colors[index];
+    };
+
     return (
-        <div className="comment-item">
-            <div className="comment-header">
-                <div className="comment-user-info">
-                    <div className="comment-avatar">
+        <div className={`comment-item ${isReply ? 'is-reply' : ''} ${isParent ? 'is-parent' : ''}`}>
+            <div className="comment-content-wrapper">
+                <div className="comment-avatar-wrapper">
+                    <div 
+                        className="comment-avatar" 
+                        style={{ background: getAvatarColor(comment.userName) }}
+                    >
                         {comment.userName?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <div className="comment-meta">
-                        <span className="comment-author">{comment.userName || 'Anonymous'}</span>
-                        <span className="comment-date">
-                            {formatDate(comment.createdAt)}
-                            {comment.isEdited && <span className="edited-badge"> (edited)</span>}
-                        </span>
-                    </div>
+                    {isReply && <div className="reply-line"></div>}
                 </div>
-                {isOwner && !isEditing && (
-                    <div className="comment-actions">
-                        <button className="action-btn edit-btn" onClick={() => setIsEditing(true)}>
-                            Edit
-                        </button>
-                        <button className="action-btn delete-btn" onClick={handleDelete}>
-                            Delete
-                        </button>
-                    </div>
-                )}
-            </div>
 
-            {isEditing ? (
-                <div className="comment-edit">
-                    <CommentBox
-                        initialValue={comment.content}
-                        onAddComment={handleUpdate}
-                        onCancel={() => setIsEditing(false)}
-                        submitLabel="Update"
-                    />
-                </div>
-            ) : (
-                <>
-                    <div className="comment-body">
-                        {comment.content}
-                    </div>
-                    {user && !isReplying && onReply && (
-                        <div className="comment-footer">
-                            <button className="reply-btn" onClick={() => setIsReplying(true)}>
-                                Reply
-                            </button>
+                <div className="comment-main">
+                    <div className="comment-header">
+                        <div className="comment-user-info">
+                            <span className="comment-author">{comment.userName || 'Anonymous'}</span>
+                            {isReply && parentComment && (
+                                <span className="reply-indicator">
+                                    replied to <span className="parent-author">@{parentComment.userName || 'Anonymous'}</span>
+                                </span>
+                            )}
+                            <span className="comment-date">
+                                {formatDate(comment.createdAt)}
+                                {comment.isEdited && <span className="edited-badge"> (edited)</span>}
+                            </span>
                         </div>
-                    )}
-                    {isReplying && (
-                        <div className="comment-reply-box">
+                        {isOwner && !isEditing && (
+                            <div className="comment-actions">
+                                <button className="action-btn edit-btn" onClick={() => setIsEditing(true)}>
+                                    ✏️ Edit
+                                </button>
+                                <button className="action-btn delete-btn" onClick={handleDelete}>
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {isEditing ? (
+                        <div className="comment-edit">
                             <CommentBox
-                                onAddComment={handleReply}
-                                onCancel={() => setIsReplying(false)}
-                                submitLabel="Reply"
+                                initialValue={comment.content}
+                                onAddComment={handleUpdate}
+                                onCancel={() => setIsEditing(false)}
+                                submitLabel="Update"
                             />
                         </div>
+                    ) : (
+                        <>
+                            <div className="comment-body">
+                                {comment.content}
+                            </div>
+                            {user && !isReplying && onReply && !isReply && (
+                                <div className="comment-footer">
+                                    <button className="reply-btn" onClick={() => setIsReplying(true)}>
+                                        💬 Reply
+                                    </button>
+                                </div>
+                            )}
+                            {isReplying && (
+                                <div className="comment-reply-box">
+                                    <div className="replying-to-banner">
+                                        Replying to <strong>@{comment.userName || 'Anonymous'}</strong>
+                                    </div>
+                                    <CommentBox
+                                        onAddComment={handleReply}
+                                        onCancel={() => setIsReplying(false)}
+                                        submitLabel="Post Reply"
+                                    />
+                                </div>
+                            )}
+                        </>
                     )}
-                </>
-            )}
+                </div>
+            </div>
         </div>
     );
 }
